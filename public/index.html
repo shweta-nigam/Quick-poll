@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <title>Quick Poll</title>
 
-    <!-- Socket.IO -->
+    
     <script src="/socket.io/socket.io.js"></script>
 
     <style>
@@ -91,14 +91,6 @@
       </div>
 
       <hr />
-
-      <!-- Load Poll -->
-      <!-- <div class="render-container">
-    <h3>View Results</h3>
-<input id="resultPollIdInput" placeholder="Enter poll ID" />
-<button onclick="loadResults()">View Results</button>
-  </div> -->
-
       <hr />
 
       <!-- Poll Display -->
@@ -154,60 +146,90 @@
         alert("Link copied!");
       }
 
-   window.onload = async () => {
-  const pollId = getPollIdFromURL();
+      window.onload = async () => {
+        const pollId = getPollIdFromURL();
 
-  if (!pollId) {
-    console.log("No pollId in URL");
-    return;
-  }
-
-  currentPollId = pollId;
-
-  socket.emit("join_poll", pollId);
-
-  const res = await fetch(`/api/poll/${pollId}`);
-  const poll = await res.json();
-
-  renderResults(poll);
-};
-
-      function renderResults(poll) {
-        const container = document.getElementById("pollSection");
-
-        container.innerHTML = `
-    <h3>${poll.question}</h3>
-    ${poll.options
-      .map(
-        (opt) => `
-      <div class="option">
-        <span>${opt.text}</span>
-        <span class="votes">${opt.votes} votes</span>
-      </div>
-    `,
-      )
-      .join("")}
-  `;
-      }
-      async function vote(optionId) {
-        const res = await fetch(`/api/poll/${currentPollId}/vote`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ optionId, userId }),
-        });
-
-        const data = await res.json();
-
-        if (data.error) {
-          alert(data.error); // "Already voted"
+        if (!pollId) {
+          console.log("No pollId in URL");
+          return;
         }
 
-       const updatedPoll = await fetch(`/api/poll/${currentPollId}`);
-const pollData = await updatedPoll.json();
-renderResults(pollData);
-      }
+        currentPollId = pollId;
+
+        socket.emit("join_poll", pollId);
+
+        const res = await fetch(`/api/poll/${pollId}`);
+        const poll = await res.json();
+
+        renderResults(poll);
+      };
+
+      function renderResults(poll) {
+  const container = document.getElementById("pollSection");
+
+  const totalVotes = poll.options.reduce(
+    (sum, o) => sum + (o.votes || 0),
+    0
+  );
+
+  container.innerHTML = `
+    <h3>${poll.question}</h3>
+    ${poll.options
+      .map((opt) => {
+        const votes = opt.votes || 0;
+        const percent = totalVotes
+          ? ((votes / totalVotes) * 100).toFixed(1)
+          : 0;
+
+        return `
+          <div class="option">
+            <div>${opt.text}</div>
+            <div class="votes">${votes} votes (${percent}%)</div>
+            <div class="bar" style="width:${percent}%"></div>
+          </div>
+        `;
+      })
+      .join("")}
+  `;
+}
+
+
+// function renderResults(poll) {
+//   const container = document.getElementById("pollSection");
+
+//   container.innerHTML = `
+//     <h3>${poll.question}</h3>
+//     ${poll.options
+//       .map(
+//         (opt) => `
+//       <div class="option" onclick="vote('${opt.id}')">
+//         <span>${opt.text}</span>
+//         <span class="votes">${opt.votes} votes</span>
+//       </div>
+//     `
+//       )
+//       .join("")}
+//   `;
+// }
+      // async function vote(optionId) {
+      //   const res = await fetch(`/api/poll/${currentPollId}/vote`, {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify({ optionId, userId }),
+      //   });
+
+      //   const data = await res.json();
+
+      //   if (data.error) {
+      //     alert(data.error); // "Already voted"
+      //   }
+
+      //   const updatedPoll = await fetch(`/api/poll/${currentPollId}`);
+      //   const pollData = await updatedPoll.json();
+      //   renderResults(pollData);
+      // }
 
       // live updates
       socket.on("vote_update", (poll) => {

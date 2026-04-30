@@ -29,7 +29,7 @@ export const createRouter = (io) => {
 
       res.json({
         pollId: poll.id,
-        shareUrl: `http://localhost:8080/poll.html?id=${poll.id}`,
+        shareUrl: `http://localhost:8080/poll.html?pollId=${poll.id}`,
       });
     } catch (err) {
       console.error(err);
@@ -111,7 +111,7 @@ export const createRouter = (io) => {
     res.json({ success: true, poll: updatedPoll });
 
   } catch (err) {
-    console.error("VOTE ERROR:", err); // 👈 THIS will show real issue
+    console.error("VOTE ERROR:", err); //  THIS will show real issue
     res.status(500).json({ error: "Vote failed" });
   }
 });
